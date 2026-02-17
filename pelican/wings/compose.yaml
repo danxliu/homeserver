@@ -1,0 +1,33 @@
+services:
+  wings:
+    image: ghcr.io/pelican-dev/wings:latest
+    container_name: pelican_wings
+    restart: always
+    networks:
+      - proxy-nw
+      - default
+    ports:
+      - "8080:8080"
+      - "2022:2022"
+    tty: true
+    environment:
+      TZ: "America/Los_Angeles"
+      WINGS_UID: 0
+      WINGS_GID: 0
+      WINGS_USERNAME: pelican
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker/containers/:/var/lib/docker/containers/"
+      - "/etc/pelican/:/etc/pelican/"
+      - "/var/lib/pelican/:/var/lib/pelican/"
+      - "/var/log/pelican/:/var/log/pelican/"
+      - "/tmp/pelican/:/tmp/pelican/"
+      - "/etc/ssl/certs:/etc/ssl/certs:ro" 
+
+networks:
+  proxy-nw:
+    external: true
+  default:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16

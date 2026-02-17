@@ -1,0 +1,31 @@
+services:
+  panel:
+    image: ghcr.io/pelican-dev/panel:latest
+    container_name: pelican_panel
+    restart: always
+    networks:
+      - proxy-nw
+      - default
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${PELICAN_DATA_PATH}:/pelican-data
+      - ${PELICAN_LOGS_PATH}:/var/www/html/storage/logs
+    environment:
+      - XDG_DATA_HOME=/pelican-data
+      - APP_URL="http://panel.danxliu.com"
+      - ADMIN_EMAIL="danxliu@protonmail.com"
+      - CADDY_EMAIL="danxliu@protonmail.com"
+      - TRUSTED_PROXIES=*
+
+volumes:
+  pelican-data:
+  pelican-logs:
+
+networks:
+  proxy-nw:
+    external: true
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
