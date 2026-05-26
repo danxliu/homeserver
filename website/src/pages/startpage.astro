@@ -1,0 +1,211 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+---
+
+<!doctype html>
+<html lang="en">
+  <style>
+    .row {
+      display: flex;
+      gap: 1rem;
+    }
+    :global(.up) {
+      background-color: var(--green);
+      color: var(--black);
+      padding: 0.1rem 0.35rem;
+    }
+    :global(.down) {
+      background-color: var(--red);
+      color: var(--black);
+      padding: 0.1rem 0.35rem;
+    }
+    :global(#stocks) {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      list-style: none;
+      padding: 0;
+    }
+    :global(#stocks > li) {
+      flex: 1 1 0;
+      min-width: 8rem;
+      border-left: 2px solid var(--accent);
+      padding-left: 0.75rem;
+      margin-top: 0;
+    }
+  </style>
+
+  <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+
+  <body>
+    <Header />
+    <main>
+      <h2 id="welcome">Hello.</h2>
+      <div>
+        <time id="time">00:00AM</time>
+      </div>
+      <div>
+        <small id="weather">?°F</small>
+      </div>
+      <input
+        id="search"
+        type="text"
+        autofocus
+        autocomplete="off"
+        placeholder="Search Google..."
+      />
+      <h4>Links</h4>
+      <div class="row">
+        <ul>
+          <li>
+            <a href="https://sites.google.com/berkeley.edu/cs164-sp26/home"
+              >CS164</a
+            >
+          </li>
+          <li>
+            <a href="https://sp26.cs168.io/">CS168</a>
+          </li>
+          <li>
+            <a href="https://cs184.eecs.berkeley.edu/sp26/">CS184</a>
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <a href="https://edstem.org/">Edstem</a>
+          </li>
+          <li>
+            <a href="https://www.gradescope.com/">Gradescope</a>
+          </li>
+        </ul>
+      </div>
+      <h4>Stocks</h4>
+      <ul id="stocks"></ul>
+    </main>
+  </body><script>
+    const codes = {
+      0: "Clear sky",
+      1: "Mainly clear",
+      2: "Partly cloudy",
+      3: "Overcast",
+      45: "Fog",
+      48: "Depositing rime fog",
+      51: "Light drizzle",
+      53: "Moderate drizzle",
+      55: "Dense drizzle",
+      61: "Slight rain",
+      63: "Moderate rain",
+      65: "Heavy rain",
+      71: "Slight snow",
+      73: "Moderate snow",
+      75: "Heavy snow",
+      95: "Thunderstorm",
+      96: "Thunderstorm with slight hail",
+      99: "Thunderstorm with heavy hail",
+    };
+
+    const days = {
+      0: "Sunday",
+      1: "Monday",
+      2: "Tuesday",
+      3: "Wednesday",
+      4: "Thursday",
+      5: "Friday",
+      6: "Saturday",
+    };
+
+    const symbols = [
+      "voo",
+      "qqq",
+      "googl",
+      "amzn",
+      "aapl",
+      "meta",
+      "msft",
+      "nvda",
+      "tsla",
+    ];
+
+    const welcomeElem = document.getElementById("welcome");
+    const weatherElem = document.getElementById("weather");
+    const timeElem = document.getElementById("time");
+    const searchElem = document.getElementById("search");
+    const stocksElem = document.getElementById("stocks");
+    searchElem?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        const query = (e.target as HTMLInputElement).value;
+        if (query) {
+          window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+      }
+    });
+
+    const fetchWeather = async () => {
+      if (!weatherElem) return;
+      try {
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+        const d = await res.json();
+        const lat = d.latitude;
+        const lon = d.longitude;
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit&wind_speed_unit=mph`,
+        );
+        if (!response.ok) throw new Error("Network response was not ok");
+        const weather_data = await response.json();
+        const weather = weather_data.current_weather;
+        const units = weather_data.current_weather_units;
+        weatherElem.innerText = `${weather.temperature}${units.temperature}, ${codes[weather.weathercode] || "Unknown"}`;
+      } catch (error) {
+        weatherElem.style.display = "none";
+        console.error("Weather fetch error:", error);
+      }
+    };
+
+    const fetchTime = () => {
+      if (!timeElem || !welcomeElem) return;
+      const date = new Date();
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const day = date.getDay();
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const thours = hours >= 13 ? hours - 12 : hours;
+      const tminutes = minutes >= 10 ? minutes : `0${minutes}`;
+      const tday = days[day];
+      timeElem.innerText = `${tday}, ${thours}:${tminutes} ${ampm}`;
+      if (hours < 12) welcomeElem.innerText = "Good Morning.";
+      else if (hours < 18) welcomeElem.innerText = "Good Afternoon.";
+      else welcomeElem.innerText = "Good Night.";
+    };
+
+    const fetchStocks = async () => {
+      if (!stocksElem) return;
+      let html = "";
+      for (const symbol of symbols) {
+        const response = await fetch(`/api/stock/${symbol}`);
+        if (!response.ok) continue;
+        const data = await response.json();
+        const round = (str: string) => parseFloat(str).toFixed(2);
+        const tprice = round(data.regularMarketPrice) || "N/A";
+        const tsymbol = data.symbol;
+        const tperc = round(data.regularMarketChangePercent);
+        const tpercsymbol =
+          parseFloat(data.regularMarketChangePercent) > 0 ? "↑" : "↓";
+        const tpercclass =
+          parseFloat(data.regularMarketChangePercent) > 0 ? "up" : "down";
+        html += `<li><b>${tsymbol}</b><div>$${tprice} <span class='${tpercclass}'>${tpercsymbol}${tperc}%</span></div></li>`;
+      }
+      stocksElem.innerHTML = html;
+    };
+    fetchTime();
+    fetchWeather();
+    fetchStocks();
+    setInterval(() => {
+      fetchTime();
+      fetchWeather();
+      fetchStocks();
+    }, 10000);
+  </script>
+</html>

@@ -1,14 +1,15 @@
 services:
   nginx-proxy:
     image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy
     restart: unless-stopped
     ports:
       - '80:80'
       - '81:81'
       - '443:443'
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
     networks:
       - proxy-nw
 
@@ -16,3 +17,7 @@ networks:
   proxy-nw:
     name: proxy-nw
     driver: bridge
+
+volumes:
+  npm_data:
+  npm_letsencrypt:

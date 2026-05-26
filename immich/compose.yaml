@@ -7,7 +7,7 @@ services:
       - ../.env
       - .env
     volumes:
-      - ${IMMICH_UPLOAD_PATH}:/data
+      - /opt/homeserver/immich/library:/data
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 2283:2283
@@ -52,7 +52,7 @@ services:
       POSTGRES_DB: ${IMMICH_DB_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - ${IMMICH_DB_PATH}:/var/lib/postgresql/data
+      - immich_postgres_data:/var/lib/postgresql/data
     shm_size: 128mb
     restart: always
     networks:
@@ -60,6 +60,7 @@ services:
 
 volumes:
   model-cache:
+  immich_postgres_data:
 
 networks:
   proxy-nw:

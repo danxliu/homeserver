@@ -1,0 +1,31 @@
+services:
+  netbootxyz:
+    image: ghcr.io/netbootxyz/netbootxyz:latest
+    env_file:
+      - ../.env
+    container_name: netbootxyz
+    environment:
+      - PORT_RANGE=30000:30010
+    volumes:
+      - netbootxyz_config:/config
+      - netbootxyz_assets:/assets
+    ports:
+      - 3000:3000/tcp                     # Web UI
+      - 69:69/udp                         # TFTP port (Required for PXE)
+      - 30000-30010:30000-30010/udp       # TFTP Ephemeral ports
+      - 8081:80/tcp                       # Web server for local assets
+    restart: unless-stopped
+
+  proxydhcp:
+    image: alpine:latest
+    container_name: netbootxyz-proxydhcp
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    command: /bin/sh -c "apk add --no-cache dnsmasq && dnsmasq -d -q -C /etc/dnsmasq.conf"
+    volumes:
+      - ./dnsmasq.conf:/etc/dnsmasq.conf:ro
+    restart: unless-stopped
+volumes:
+  netbootxyz_config:
+  netbootxyz_assets:

@@ -9,14 +9,17 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ${PELICAN_DATA_PATH}:/pelican-data
-      - ${PELICAN_LOGS_PATH}:/var/www/html/storage/logs
+      - pelican-data:/pelican-data
+      - pelican-logs:/var/www/html/storage/logs
+      - ./Caddyfile:/etc/caddy/Caddyfile
     environment:
       - XDG_DATA_HOME=/pelican-data
-      - APP_URL="http://pelican.danxliu.com"
+      - APP_URL="https://panel.danxliu.com"
       - ADMIN_EMAIL="danxliu@protonmail.com"
       - CADDY_EMAIL="danxliu@protonmail.com"
       - TRUSTED_PROXIES=*
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/pelican-data/database.sqlite
 
 volumes:
   pelican-data:
