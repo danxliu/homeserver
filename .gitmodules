@@ -1,3 +1,6 @@
 [submodule "website"]
 	path = website
 	url = https://github.com/danxliu/website.git
+[submodule "discord"]
+	path = discord
+	url = git@github.com:danxliu/discord.git

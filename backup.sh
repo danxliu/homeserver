@@ -12,6 +12,9 @@ docker exec -t immich_postgres pg_dumpall -c -U postgres > "$IMMICH_DIR/immich_d
 echo "Syncing Immich data..."
 rsync -rtv --delete --exclude 'postgres/' "$IMMICH_DIR/" "$BACKUP_DEST/immich/"
 
+echo "Removing dumped database..."
+rm -rf "$IMMICH_DIR/immich_db_dump.sql"
+
 echo "=========================================="
 echo "Backup finished successfully on $(date)"
 echo "=========================================="
